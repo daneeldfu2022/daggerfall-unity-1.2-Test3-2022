@@ -1131,6 +1131,7 @@ namespace DaggerfallWorkshop.Game
         // Access wagon or dungeon exit
         private void DungeonWagonAccess_OnButtonClick(DaggerfallMessageBox sender, DaggerfallMessageBox.MessageBoxButtons messageBoxButton)
         {
+            sender.CloseWindow();
             if (messageBoxButton == DaggerfallMessageBox.MessageBoxButtons.No)
             {
                 playerEnterExit.TransitionDungeonExterior(true);
@@ -1141,7 +1142,6 @@ namespace DaggerfallWorkshop.Game
                 DaggerfallUI.Instance.InventoryWindow.AllowDungeonWagonAccess();
                 uiManager.PushWindow(DaggerfallUI.Instance.InventoryWindow);
             }
-            sender.CloseWindow();
         }
 
         // Look for building array on object, then on direct parent
