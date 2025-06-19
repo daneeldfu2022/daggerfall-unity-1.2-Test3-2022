@@ -14,7 +14,6 @@ using System;
 using DaggerfallWorkshop.Game.Serialization;
 using DaggerfallWorkshop.Utility;
 using DaggerfallWorkshop.Game.Items;
-using DaggerfallWorkshop.Game.UserInterface;
 using DaggerfallWorkshop.Game.UserInterfaceWindows;
 using DaggerfallWorkshop.Game.Banking;
 using UnityEngine;
@@ -217,8 +216,7 @@ namespace DaggerfallWorkshop.Game.Guilds
 
         private void ReceiveArmorPopup_OnClose()
         {
-            UserInterfaceManager uiManager = DaggerfallUI.Instance.UserInterfaceManager;
-            uiManager.PushWindow(DaggerfallUI.Instance.InventoryWindow);
+            DaggerfallUI.PostMessage(DaggerfallUIMessages.dfuiOpenInventoryWindow);
         }
 
         public void ReceiveHouse()
