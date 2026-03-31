@@ -211,26 +211,7 @@ namespace DaggerfallWorkshop.Game
                 // Create and orient 3d arrow
                 goModel = GameObjectHelper.CreateDaggerfallMeshGameObject(99800, transform, ignoreCollider: true);
 
-                // Offset up so it comes from same place LOS check is done from
-                Vector3 adjust;
-                if (caster != GameManager.Instance.PlayerEntityBehaviour)
-                {
-                    CharacterController controller = caster.transform.GetComponent<CharacterController>();
-                    adjust = caster.transform.forward * 0.6f;
-                    adjust.y += controller.height / 3;
-                }
-                else
-                {
-                    // Adjust slightly downward to match bow animation
-                    adjust = (GameManager.Instance.MainCamera.transform.rotation * -Caster.transform.up) * 0.11f;
-                    // Adjust to the right or left to match bow animation
-                    if (!GameManager.Instance.WeaponManager.ScreenWeapon.FlipHorizontal)
-                        adjust += GameManager.Instance.MainCamera.transform.right * 0.15f;
-                    else
-                        adjust -= GameManager.Instance.MainCamera.transform.right * 0.15f;
-                }
-
-                goModel.transform.localPosition = adjust;
+                goModel.transform.localPosition = Vector3.zero;
                 goModel.transform.rotation = Quaternion.LookRotation(GetAimDirection());
                 goModel.layer = gameObject.layer;
             }
@@ -332,6 +313,7 @@ namespace DaggerfallWorkshop.Game
                 castFoundHit = Physics.Raycast(colliderPosition, direction, out hitInfo, displacement.magnitude + ColliderRadius, layerMask);
             else
                 castFoundHit = Physics.SphereCast(colliderPosition, ColliderRadius, direction, out hitInfo, displacement.magnitude + ColliderRadius, layerMask);
+
             if (castFoundHit)
             {
                 // Place self at meeting point with collider and do collision logic.
@@ -496,6 +478,30 @@ namespace DaggerfallWorkshop.Game
             if (caster == GameManager.Instance.PlayerEntityBehaviour)
             {
                 aimPosition = GameManager.Instance.MainCamera.transform.position;
+            }
+
+            //projectile offset code moved here for accuracy
+            if (isArrow)
+            {
+                // Offset up so it comes from same place LOS check is done from
+                Vector3 adjust;
+                if (caster != GameManager.Instance.PlayerEntityBehaviour)
+                {
+                    CharacterController controller = caster.transform.GetComponent<CharacterController>();
+                    adjust = caster.transform.forward * 0.6f;
+                    adjust.y += controller.height / 3;
+                }
+                else
+                {
+                    // Adjust slightly downward to match bow animation
+                    adjust = (GameManager.Instance.MainCamera.transform.rotation * -Caster.transform.up) * 0.11f;
+                    // Adjust to the right or left to match bow animation
+                    if (!GameManager.Instance.WeaponManager.ScreenWeapon.FlipHorizontal)
+                        adjust += GameManager.Instance.MainCamera.transform.right * 0.15f;
+                    else
+                        adjust -= GameManager.Instance.MainCamera.transform.right * 0.15f;
+                }
+                aimPosition += adjust;
             }
 
             return aimPosition;
