@@ -85,6 +85,8 @@ namespace DaggerfallWorkshop.Game
         GameObject goModel = null;
         EnemySenses enemySenses;
 
+        private static int layerMaskDefault = -1;
+        private static int layerMaskPlayer = -1;
         int layerMask;
 
         List<DaggerfallEntityBehaviour> targetEntities = new List<DaggerfallEntityBehaviour>();
@@ -233,14 +235,27 @@ namespace DaggerfallWorkshop.Game
                 goModel.layer = gameObject.layer;
             }
 
-            string layerName;
-            if (caster && caster != GameManager.Instance.PlayerEntityBehaviour)
-                layerName = "SpellMissiles";
-            else
-                layerName = "Player";
+            //if layer mask has not yet been initialized, do it now
+            if (layerMaskDefault == -1)
+                InitializeLayerMasks();
 
-            layerMask = ~(1 << LayerMask.NameToLayer(layerName));
-            layerMask = layerMask & ~(1 << LayerMask.NameToLayer("Ignore Raycast"));
+            //assign layer mask
+            if (caster && caster != GameManager.Instance.PlayerEntityBehaviour)
+                layerMask = layerMaskDefault;
+            else
+                layerMask = layerMaskPlayer;
+        }
+
+        static void InitializeLayerMasks()
+        {
+            layerMaskDefault = Physics.DefaultRaycastLayers;
+            layerMaskDefault &= ~(1 << Physics.IgnoreRaycastLayer);
+            layerMaskDefault &= ~(1 << LayerMask.NameToLayer("Automap"));
+
+            layerMaskPlayer = Physics.DefaultRaycastLayers;
+            layerMaskPlayer &= ~(1 << Physics.IgnoreRaycastLayer);
+            layerMaskPlayer &= ~(1 << LayerMask.NameToLayer("Player"));
+            layerMaskPlayer &= ~(1 << LayerMask.NameToLayer("Automap"));
         }
 
         private void Update()
@@ -385,14 +400,23 @@ namespace DaggerfallWorkshop.Game
 
         #region Static Methods
 
-        public static DaggerfallEntityBehaviour GetEntityTargetInTouchRange(Vector3 aimPosition, Vector3 aimDirection)
+        public static DaggerfallEntityBehaviour GetEntityTargetInTouchRange(Vector3 aimPosition, Vector3 aimDirection, int layerMaskTouch = -1)
         {
+            //set the default layer mask if none was passed
+            if (layerMaskTouch == -1)
+            {
+                //Initialize the layer masks if they're still not
+                if (layerMaskDefault == -1)
+                    InitializeLayerMasks();
+
+                layerMaskTouch = layerMaskDefault;
+            }
+
             // Fire ray along caster facing
             // Origin point of ray is set back slightly to fix issue where strikes against target capsules touching caster capsule do not connect
             RaycastHit hit;
-            aimPosition -= aimDirection * 0.1f;
             Ray ray = new Ray(aimPosition, aimDirection);
-            if (Physics.SphereCast(ray, SphereCastRadius, out hit, TouchRange))
+            if (Physics.SphereCast(ray, SphereCastRadius, out hit, TouchRange, layerMaskTouch))
                 return hit.transform.GetComponent<DaggerfallEntityBehaviour>();
             else
                 return null;
@@ -407,7 +431,7 @@ namespace DaggerfallWorkshop.Game
         {
             transform.position = caster.transform.position;
 
-            DaggerfallEntityBehaviour entityBehaviour = GetEntityTargetInTouchRange(GetAimPosition(), GetAimDirection());
+            DaggerfallEntityBehaviour entityBehaviour = GetEntityTargetInTouchRange(GetAimPosition(), GetAimDirection(), layerMask);
             if (entityBehaviour && entityBehaviour != caster)
             {
                 targetEntities.Add(entityBehaviour);
