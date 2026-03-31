@@ -16,9 +16,9 @@ QuestorOffer:  [1000]
 <ce>                  I can tell you %pcf, that she never
 <ce>                    delivered such a letter to me.
 <ce>                                    
-<ce>                 I would like you to investigate this
-<ce>                 further, %pcn. It could be dangerously
-<ce>                 difficult to poke into the affairs of
+<ce>                    I would like you to investigate
+<ce>                    this further, %pcn. It could be
+<ce>                   risky to poke into the affairs of
 <ce>                 Aubk-i without enraging King Gothryd,
 <ce>                     even though he is my own son.
 <ce>                           Are you willing?
