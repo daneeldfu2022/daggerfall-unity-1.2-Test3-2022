@@ -61,6 +61,18 @@ namespace DaggerfallWorkshop.Game
         public const float SphereCastRadius = 0.25f;
         public const float TouchRange = 3.0f;
 
+        private static readonly Collider[] aoeBuffer = new Collider[64];
+        private readonly List<DaggerfallEntityBehaviour> tmpTargets = new List<DaggerfallEntityBehaviour>(32);
+
+        // Cached references
+        private GameManager gm;
+        private Camera mainCamera;
+        private WeaponManager weaponManager;
+        private Collider casterCollider;
+        private EnemySenses cachedEnemySenses;
+        private EnemyAttack cachedEnemyAttack;
+        private CharacterController casterController;
+
         Vector3 colliderPosition;
 
         Vector3 direction;
@@ -170,39 +182,53 @@ namespace DaggerfallWorkshop.Game
         private void Awake()
         {
             audioSource = transform.GetComponent<DaggerfallAudioSource>();
+
+            gm = GameManager.Instance;
+            mainCamera = gm.MainCamera;
+            weaponManager = gm.WeaponManager;
+            audioSource = GetComponent<DaggerfallAudioSource>();
         }
 
         private void Start()
         {
             // Setup light and shadows
             myLight = GetComponent<Light>();
-            myLight.enabled = EnableLight;
+            myLight.enabled = EnableLight && DaggerfallUnity.Settings.EnableSpellLighting;
             forceDisableSpellLighting = !DaggerfallUnity.Settings.EnableSpellLighting;
-            if (forceDisableSpellLighting) myLight.enabled = false;
-            if (!DaggerfallUnity.Settings.EnableSpellShadows) myLight.shadows = LightShadows.None;
+            if (!DaggerfallUnity.Settings.EnableSpellShadows)
+            {
+                myLight.shadows = LightShadows.None;
+            }
+
             initialRange = myLight.range;
             initialIntensity = myLight.intensity;
 
             // Use payload when available
             if (payload != null)
             {
-                // Set payload missile properties
                 caster = payload.CasterEntityBehaviour;
                 targetType = payload.Settings.TargetType;
                 elementType = payload.Settings.ElementType;
 
                 // Set spell billboard anims automatically from payload for mobile missiles
-                if (targetType == TargetTypes.SingleTargetAtRange ||
-                    targetType == TargetTypes.AreaAtRange)
+                if (targetType == TargetTypes.SingleTargetAtRange || targetType == TargetTypes.AreaAtRange)
                 {
                     UseSpellBillboardAnims();
                 }
             }
 
             // Setup senses
-            if (caster && caster != GameManager.Instance.PlayerEntityBehaviour)
+            if (caster)
             {
-                enemySenses = caster.GetComponent<EnemySenses>();
+                casterCollider = caster.GetComponent<Collider>();
+                cachedEnemySenses = caster.GetComponent<EnemySenses>();
+                cachedEnemyAttack = caster.GetComponent<EnemyAttack>();
+                casterController = caster.GetComponent<CharacterController>();
+            }
+
+            if (caster && caster != gm.PlayerEntityBehaviour)
+            {
+                enemySenses = cachedEnemySenses;
             }
 
             // Setup arrow
@@ -230,13 +256,11 @@ namespace DaggerfallWorkshop.Game
         static void InitializeLayerMasks()
         {
             layerMaskDefault = Physics.DefaultRaycastLayers;
-            layerMaskDefault &= ~(1 << Physics.IgnoreRaycastLayer);
             layerMaskDefault &= ~(1 << LayerMask.NameToLayer("Automap"));
 
             layerMaskPlayer = Physics.DefaultRaycastLayers;
-            layerMaskPlayer &= ~(1 << Physics.IgnoreRaycastLayer);
-            layerMaskPlayer &= ~(1 << LayerMask.NameToLayer("Player"));
             layerMaskPlayer &= ~(1 << LayerMask.NameToLayer("Automap"));
+            layerMaskPlayer &= ~(1 << LayerMask.NameToLayer("Player"));
         }
 
         private void Update()
@@ -398,10 +422,12 @@ namespace DaggerfallWorkshop.Game
             // Origin point of ray is set back slightly to fix issue where strikes against target capsules touching caster capsule do not connect
             RaycastHit hit;
             Ray ray = new Ray(aimPosition, aimDirection);
-            if (Physics.SphereCast(ray, SphereCastRadius, out hit, TouchRange, layerMaskTouch))
+            if (Physics.SphereCast(ray, SphereCastRadius, out hit, TouchRange, layerMaskTouch, QueryTriggerInteraction.Ignore))
+            {
                 return hit.transform.GetComponent<DaggerfallEntityBehaviour>();
-            else
-                return null;
+            }
+
+            return null;
         }
 
         #endregion
@@ -437,29 +463,34 @@ namespace DaggerfallWorkshop.Game
         // AOE can strike any number of targets within range with an option to exclude caster
         void DoAreaOfEffect(Vector3 position, bool ignoreCaster = false)
         {
-            List<DaggerfallEntityBehaviour> entities = new List<DaggerfallEntityBehaviour>();
-
             colliderPosition = position;
 
-            // Collect AOE targets and ignore duplicates
-            Collider[] overlaps = Physics.OverlapSphere(position, ExplosionRadius);
-            for (int i = 0; i < overlaps.Length; i++)
+            int count = Physics.OverlapSphereNonAlloc(position, ExplosionRadius, aoeBuffer, layerMaskDefault, QueryTriggerInteraction.Ignore);
+            tmpTargets.Clear();
+
+            for (int i = 0; i < count; i++)
             {
-                DaggerfallEntityBehaviour aoeEntity = overlaps[i].GetComponent<DaggerfallEntityBehaviour>();
-
-                if (ignoreCaster && aoeEntity == caster)
-                    continue;
-
-                if (aoeEntity && !targetEntities.Contains(aoeEntity))
+                var beh = aoeBuffer[i].GetComponent<DaggerfallEntityBehaviour>();
+                if (!beh)
                 {
-                    entities.Add(aoeEntity);
-                    //Debug.LogFormat("Missile hit target {0} by AOE", aoeEntity.name);
+                    continue;
+                }
+
+                if (ignoreCaster && beh == caster)
+                {
+                    continue;
+                }
+
+                if (!targetEntities.Contains(beh))
+                {
+                    tmpTargets.Add(beh);
                 }
             }
 
-            // Add collection to target entities
-            if (entities.Count > 0)
-                targetEntities.AddRange(entities);
+            if (tmpTargets.Count > 0)
+            {
+                targetEntities.AddRange(tmpTargets);
+            }
 
             impactDetected = true;
             missileReleased = true;
@@ -485,21 +516,24 @@ namespace DaggerfallWorkshop.Game
             {
                 // Offset up so it comes from same place LOS check is done from
                 Vector3 adjust;
-                if (caster != GameManager.Instance.PlayerEntityBehaviour)
+                if (caster != gm.PlayerEntityBehaviour)
                 {
-                    CharacterController controller = caster.transform.GetComponent<CharacterController>();
                     adjust = caster.transform.forward * 0.6f;
-                    adjust.y += controller.height / 3;
+                    if (casterController)
+                    {
+                        adjust.y += casterController.height / 3;
+                    }
                 }
                 else
                 {
                     // Adjust slightly downward to match bow animation
-                    adjust = (GameManager.Instance.MainCamera.transform.rotation * -Caster.transform.up) * 0.11f;
+                    adjust = (gm.MainCamera.transform.rotation * -caster.transform.up) * 0.11f;
                     // Adjust to the right or left to match bow animation
-                    if (!GameManager.Instance.WeaponManager.ScreenWeapon.FlipHorizontal)
-                        adjust += GameManager.Instance.MainCamera.transform.right * 0.15f;
+                    var right = gm.MainCamera.transform.right * 0.15f;
+                    if (!gm.WeaponManager.ScreenWeapon.FlipHorizontal)
+                        adjust += right;
                     else
-                        adjust -= GameManager.Instance.MainCamera.transform.right * 0.15f;
+                        adjust -= right;
                 }
                 aimPosition += adjust;
             }
@@ -631,7 +665,13 @@ namespace DaggerfallWorkshop.Game
             else
             {
                 Transform hitTransform = arrowHitCollider.gameObject.transform;
-                GameManager.Instance.WeaponManager.WeaponDamage(GameManager.Instance.WeaponManager.LastBowUsed, true, isArrowSummoned, hitTransform, hitTransform.position, goModel.transform.forward);
+                GameManager.Instance.WeaponManager.WeaponDamage(
+                    GameManager.Instance.WeaponManager.LastBowUsed,
+                    true,
+                    isArrowSummoned,
+                    hitTransform,
+                    hitTransform.position,
+                    goModel.transform.forward);
             }
         }
 
