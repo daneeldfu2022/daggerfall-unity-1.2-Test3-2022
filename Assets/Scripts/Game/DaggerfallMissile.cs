@@ -247,10 +247,10 @@ namespace DaggerfallWorkshop.Game
                 InitializeLayerMasks();
 
             //assign layer mask
-            if (caster && caster != GameManager.Instance.PlayerEntityBehaviour)
-                layerMask = layerMaskDefault;
-            else
+            if (caster && caster == gm.PlayerEntityBehaviour)
                 layerMask = layerMaskPlayer;
+            else
+                layerMask = layerMaskDefault;
         }
 
         static void InitializeLayerMasks()
@@ -506,9 +506,9 @@ namespace DaggerfallWorkshop.Game
             // Aim position is from eye level for player or origin for other mobile
             // Player must aim from camera position or it feels out of alignment
             Vector3 aimPosition = caster.transform.position;
-            if (caster == GameManager.Instance.PlayerEntityBehaviour)
+            if (caster == gm.PlayerEntityBehaviour)
             {
-                aimPosition = GameManager.Instance.MainCamera.transform.position;
+                aimPosition = gm.MainCamera.transform.position;
             }
 
             //projectile offset code moved here for accuracy
@@ -550,9 +550,9 @@ namespace DaggerfallWorkshop.Game
 
             // Aim direction should be from camera for player or facing for other mobile
             Vector3 aimDirection = Vector3.zero;
-            if (caster == GameManager.Instance.PlayerEntityBehaviour)
+            if (caster == gm.PlayerEntityBehaviour)
             {
-                aimDirection = GameManager.Instance.MainCamera.transform.forward;
+                aimDirection = gm.MainCamera.transform.forward;
             }
             else if (enemySenses)
             {
@@ -568,7 +568,7 @@ namespace DaggerfallWorkshop.Game
                     aimDirection = (predictedPosition - caster.transform.position).normalized;
 
                 // Enemy archers must aim lower to compensate for crouched player capsule
-                if (IsArrow && enemySenses.Target?.EntityType == EntityTypes.Player && GameManager.Instance.PlayerMotor.IsCrouching)
+                if (IsArrow && enemySenses.Target?.EntityType == EntityTypes.Player && gm.PlayerMotor.IsCrouching)
                     aimDirection += Vector3.down * 0.05f;
             }
 
@@ -651,7 +651,7 @@ namespace DaggerfallWorkshop.Game
                 return;
             }
 
-            if (caster != GameManager.Instance.PlayerEntityBehaviour)
+            if (caster != gm.PlayerEntityBehaviour)
             {
                 if (targetEntities[0] == caster.GetComponent<EnemySenses>().Target)
                 {
@@ -665,8 +665,8 @@ namespace DaggerfallWorkshop.Game
             else
             {
                 Transform hitTransform = arrowHitCollider.gameObject.transform;
-                GameManager.Instance.WeaponManager.WeaponDamage(
-                    GameManager.Instance.WeaponManager.LastBowUsed,
+                gm.WeaponManager.WeaponDamage(
+                    gm.WeaponManager.LastBowUsed,
                     true,
                     isArrowSummoned,
                     hitTransform,
