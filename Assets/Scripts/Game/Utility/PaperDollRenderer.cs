@@ -237,7 +237,7 @@ namespace DaggerfallWorkshop.Game.Utility
 
         void DrawTexture(ImageData srcImage, DaggerfallUnityItem item = null)
         {
-            if (srcImage.texture == null)
+            if (srcImage.texture == null || srcImage.offset == null)
                 return;
 
             DrawTexture(
