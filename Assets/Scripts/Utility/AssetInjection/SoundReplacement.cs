@@ -105,18 +105,9 @@ namespace DaggerfallWorkshop.Utility.AssetInjection
 
                     request.SendWebRequest();
 
-                    if (streaming)
-                    {
-                        // Synchronous waiting otherwise the whole architecture has to be redone
-                        while (request.downloadedBytes < 128 * 1024) { }
-                        audioClip = downloadHandler.audioClip;
-                    }
-                    else
-                    {
-                        // Synchronous waiting, otherwise the whole architecture has to be redone
-                        while (!request.isDone) { }
-                        audioClip = downloadHandler.audioClip;
-                    }
+                    // Synchronous waiting otherwise the whole architecture has to be redone
+                    while (!request.isDone) { }
+                    audioClip = downloadHandler.audioClip;
 
                     return true;
                 }
