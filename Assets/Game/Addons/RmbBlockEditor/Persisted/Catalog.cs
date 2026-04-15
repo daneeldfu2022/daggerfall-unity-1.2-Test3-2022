@@ -1,4 +1,4 @@
-﻿// Project:         Daggerfall Tools For Unity
+// Project:         Daggerfall Tools For Unity
 // Copyright:       Copyright (C) 2009-2022 Daggerfall Workshop
 // Web Site:        http://www.dfworkshop.net
 // License:         MIT License (http://www.opensource.org/licenses/mit-license.php)
@@ -47,7 +47,7 @@ namespace DaggerfallWorkshop.Game.Addons.RmbBlockEditor
                     _list = deserialized._list;
                     GenerateCatalogDictionaries(_list, ref _items, ref _subcategories, ref _categories);
                 }
-                catch (Exception error)
+                catch (Exception)
                 {
                     // The file is corrupt, so save a new one
                     Save();
@@ -57,7 +57,7 @@ namespace DaggerfallWorkshop.Game.Addons.RmbBlockEditor
                     reader.Close();
                 }
             }
-            catch (Exception error)
+            catch (Exception)
             {
                 // The file does not exist, so save the default catalog
                 RestoreDefaults();
