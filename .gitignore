@@ -87,3 +87,7 @@ crashlytics-build.properties
 .DS_Store
 
 .idea/
+/[Aa]ssets/[Pp]ackages/
+/[Aa]ssets/[Pp]ackages.meta
+/[Pp]ackages/nuget-packages/InstalledPackages
+/[Pp]ackages/nuget-packages/InstalledPackages.meta
