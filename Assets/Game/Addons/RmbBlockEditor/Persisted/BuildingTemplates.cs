@@ -5,11 +5,11 @@
 // Source Code:     https://github.com/Interkarma/daggerfall-unity
 // Original Author: Podleron (podleron@gmail.com)
 
+using DaggerfallWorkshop.Utility.AssetInjection;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using DaggerfallWorkshop.Utility.AssetInjection;
-using Newtonsoft.Json;
 using UnityEngine;
 
 namespace DaggerfallWorkshop.Game.Addons.RmbBlockEditor
@@ -42,8 +42,9 @@ namespace DaggerfallWorkshop.Game.Addons.RmbBlockEditor
                     var deserialized = JsonConvert.DeserializeObject<BuildingTemplates>(data);
                     this._list = deserialized._list;
                 }
-                catch (Exception)
+                catch (Exception error)
                 {
+                    Debug.LogException(error);
                     // The file is corrupt, so save a new one
                     Save();
                 }
@@ -52,8 +53,9 @@ namespace DaggerfallWorkshop.Game.Addons.RmbBlockEditor
                     reader.Close();
                 }
             }
-            catch (Exception)
+            catch (Exception error)
             {
+                Debug.LogException(error);
                 // The file does not exist, so save the default catalog
                 var path = Environment.CurrentDirectory + this.DefaultTemplatesPath;
                 try

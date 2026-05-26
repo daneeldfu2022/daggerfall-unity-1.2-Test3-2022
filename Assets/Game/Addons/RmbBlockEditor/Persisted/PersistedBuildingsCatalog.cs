@@ -46,9 +46,10 @@ namespace DaggerfallWorkshop.Game.Addons.RmbBlockEditor
                 {
                     _catalog.LoadFromFile(data);
                 }
-                catch (Exception)
+                catch (Exception error)
                 {
                     // The file is corrupt, so save a new one
+                    Debug.LogException(error);
                     Save();
                 }
                 finally
@@ -56,8 +57,9 @@ namespace DaggerfallWorkshop.Game.Addons.RmbBlockEditor
                     reader.Close();
                 }
             }
-            catch (Exception)
+            catch (Exception error)
             {
+                Debug.LogException(error);
                 RestoreDefault();
             }
         }

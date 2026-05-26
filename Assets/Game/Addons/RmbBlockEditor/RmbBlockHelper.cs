@@ -348,8 +348,9 @@ namespace DaggerfallWorkshop.Game.Addons.RmbBlockEditor
 
                 return go;
             }
-            catch (Exception)
+            catch (Exception error)
             {
+                Debug.LogException(error);
                 // Return a magenta-colored flat if the id can't be found
                 Texture2D texture = new Texture2D(1, 1);
                 texture.SetPixel(0, 0, Color.magenta);

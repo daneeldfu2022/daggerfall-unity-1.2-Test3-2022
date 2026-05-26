@@ -46,8 +46,9 @@ namespace DaggerfallWorkshop.Game.Addons.RmbBlockEditor
                     _settings._climateSeason = deserialized._climateSeason;
                     _settings._windowStyle = deserialized._windowStyle;
                 }
-                catch (Exception)
+                catch (Exception error)
                 {
+                    Debug.LogException(error);  
                     // The file is corrupt, so save a new one
                     Save();
                 }
@@ -56,8 +57,9 @@ namespace DaggerfallWorkshop.Game.Addons.RmbBlockEditor
                     reader.Close();
                 }
             }
-            catch (Exception)
+            catch (Exception error)
             {
+                Debug.LogException(error);  
                 // The settings file does not exist, so save a new one
                 Save();
             }

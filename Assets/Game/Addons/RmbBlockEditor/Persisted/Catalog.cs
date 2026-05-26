@@ -47,8 +47,9 @@ namespace DaggerfallWorkshop.Game.Addons.RmbBlockEditor
                     _list = deserialized._list;
                     GenerateCatalogDictionaries(_list, ref _items, ref _subcategories, ref _categories);
                 }
-                catch (Exception)
+                catch (Exception error)
                 {
+                    Debug.LogException(error);
                     // The file is corrupt, so save a new one
                     Save();
                 }
@@ -57,8 +58,9 @@ namespace DaggerfallWorkshop.Game.Addons.RmbBlockEditor
                     reader.Close();
                 }
             }
-            catch (Exception)
+            catch (Exception error)
             {
+                Debug.LogException(error);
                 // The file does not exist, so save the default catalog
                 RestoreDefaults();
             }
