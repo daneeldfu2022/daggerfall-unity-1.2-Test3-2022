@@ -193,19 +193,14 @@ namespace DaggerfallWorkshop.Game
         {
             foreach (GameObject block in cullableRDBObjects)
             {
-                // Construct bounds manually based on the block's horizontal footprint and pivot information.
+                // Constructing bounds manually based on the block's footprint and pivot information
                 Vector3 blockCenter = block.transform.position + Vector3.one * (1024 * MeshReader.GlobalScale); // Center of the block
-                Vector3 blockSize = Vector3.one * (2048 * MeshReader.GlobalScale);
+                Vector3 blockSize = Vector3.one * (2048 * MeshReader.GlobalScale); // Assuming infinite height for simplicity
                 Bounds blockBounds = new Bounds(blockCenter, blockSize);
 
-                // Dungeon blocks can contain geometry far above or below their origin. Ignore vertical distance so
-                // deep and tall areas remain visible while their block is horizontally close to the player.
-                float closestX = Mathf.Clamp(playerPosition.x, blockBounds.min.x, blockBounds.max.x);
-                float closestZ = Mathf.Clamp(playerPosition.z, blockBounds.min.z, blockBounds.max.z);
-                float deltaX = playerPosition.x - closestX;
-                float deltaZ = playerPosition.z - closestZ;
-                float closestPointSquaredDistance = deltaX * deltaX + deltaZ * deltaZ;
-                if (closestPointSquaredDistance > ScaledBlockRangeSquared)
+                // Check if the player is within the ScaledBlockRange from the closest point on the bounds
+                float closestPointDistance = Vector3.Distance(playerPosition, blockBounds.ClosestPoint(playerPosition));
+                if (closestPointDistance > ScaledBlockRange && !blockBounds.Contains(playerPosition)) // Check if outside range and player not inside block
                 {
                     if (!IsObjectCulled(block))
                     {
