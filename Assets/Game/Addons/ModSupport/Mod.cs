@@ -310,7 +310,7 @@ namespace DaggerfallWorkshop.Game.Utility.ModSupport
 
             T asset = LoadAssetFromBundle<T>(assetName, out loadedBundle);
 
-            if (asset == null)
+            if ((asset == null) && (!assetName.EndsWith("pdb.bytes")))
             {
                 Debug.LogWarning(string.Format("Failed to load asset: {0}", assetName));
                 return null;
