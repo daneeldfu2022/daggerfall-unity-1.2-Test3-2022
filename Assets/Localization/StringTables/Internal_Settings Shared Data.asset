@@ -159,6 +159,10 @@ MonoBehaviour:
     m_Key: toggleRun
     m_Metadata:
       m_Items: []
+  - m_Id: 471377790454472704
+    m_Key: vSyncValues
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:
